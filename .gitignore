@@ -1,0 +1,20 @@
+# Virtual environment
+venv/
+
+# Model cache - too large for GitHub
+~/.local/share/tts/
+references/
+
+# Generated audio outputs
+outputs/*.wav
+outputs/*.mp3
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# OS files
+.DS_Store
+*.log

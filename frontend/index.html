@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Multilingual TTS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f5f5f5;
+  --surface:#ffffff;
+  --border:#e5e5e5;
+  --border2:#d0d0d0;
+  --ink:#111111;
+  --ink2:#444444;
+  --muted:#999999;
+  --accent:#0066ff;
+  --accent-light:#e8f0ff;
+  --green:#00875a;
+  --green-light:#e6f4f0;
+  --red:#cc0000;
+  --yellow:#fffbeb;
+  --yellow-border:#fde68a;
+  --yellow-text:#92400e;
+  --radius:12px;
+  --shadow:0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.08);
+}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  min-height:100vh;
+  padding:40px 24px;
+}
+
+/* PAGE HEADER */
+.page-header{
+  text-align:center;
+  margin-bottom:36px;
+}
+.page-title{
+  font-size:1.6rem;
+  font-weight:700;
+  letter-spacing:-0.5px;
+  color:var(--ink);
+  margin-bottom:6px;
+}
+.page-sub{
+  font-size:0.88rem;
+  color:var(--muted);
+  font-weight:400;
+}
+
+/* LAYOUT */
+.layout{
+  max-width:1000px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:1fr 320px;
+  gap:20px;
+  align-items:start;
+}
+
+/* CARD */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  box-shadow:var(--shadow);
+  margin-bottom:16px;
+}
+.card:last-child{margin-bottom:0;}
+
+/* SECTION LABEL */
+.slabel{
+  font-size:0.7rem;
+  font-weight:600;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+
+/* TEXT INPUT */
+textarea{
+  width:100%;border:none;outline:none;
+  background:transparent;
+  font-family:'Inter',sans-serif;
+  font-size:0.95rem;line-height:1.7;
+  color:var(--ink);resize:none;
+  min-height:140px;
+}
+textarea::placeholder{color:#ccc;}
+.input-foot{
+  display:flex;justify-content:space-between;align-items:center;
+  padding-top:10px;margin-top:10px;
+  border-top:1px solid var(--border);
+}
+.char-info{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem;color:var(--muted);
+}
+.char-info span{color:var(--ink);font-weight:600;}
+.btn-clear{
+  font-size:0.75rem;color:var(--muted);
+  background:none;border:none;cursor:pointer;
+  font-family:'Inter',sans-serif;font-weight:500;
+  transition:color 0.15s;padding:4px 8px;
+  border-radius:6px;
+}
+.btn-clear:hover{color:var(--red);background:#fff0f0;}
+
+/* LANGUAGE */
+.lang-row{display:flex;gap:8px;flex-wrap:wrap;}
+.lang-chip{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px;
+  border:1.5px solid var(--border);
+  border-radius:8px;background:white;
+  font-size:0.82rem;font-weight:500;
+  color:var(--ink2);cursor:pointer;
+  transition:all 0.15s;user-select:none;
+}
+.lang-chip:hover{border-color:var(--accent);color:var(--accent);}
+.lang-chip.active{
+  border-color:var(--accent);
+  background:var(--accent-light);
+  color:var(--accent);font-weight:600;
+}
+
+/* MMS NOTE */
+.mms-note{
+  display:none;margin-top:10px;
+  padding:10px 14px;
+  background:var(--yellow);
+  border:1px solid var(--yellow-border);
+  border-radius:8px;
+  font-size:0.78rem;color:var(--yellow-text);
+  line-height:1.5;
+}
+.mms-note.show{display:block;}
+
+/* VOICE */
+.voice-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.voice-card{
+  border:1.5px solid var(--border);
+  border-radius:10px;padding:14px 16px;
+  cursor:pointer;transition:all 0.15s;
+  background:white;
+  display:flex;align-items:center;gap:12px;
+}
+.voice-card:hover{border-color:var(--accent);box-shadow:var(--shadow-md);}
+.voice-card.active{border-color:var(--accent);background:var(--accent-light);}
+.voice-avatar{
+  width:38px;height:38px;border-radius:8px;
+  background:#f0f0f0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;flex-shrink:0;
+}
+.voice-card.active .voice-avatar{background:white;}
+.vlabel{font-size:0.85rem;font-weight:600;color:var(--ink);margin-bottom:2px;}
+.vdesc{font-size:0.7rem;color:var(--muted);}
+.voice-card.active .vlabel{color:var(--accent);}
+.voice-section.disabled{opacity:0.4;pointer-events:none;}
+
+/* RIGHT */
+.right{display:flex;flex-direction:column;gap:16px;}
+
+/* SPEED */
+.speed-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.8rem;font-weight:600;
+  color:var(--ink);letter-spacing:-1px;margin-bottom:12px;
+}
+.speed-num span{font-size:0.9rem;color:var(--muted);font-weight:400;}
+input[type=range]{
+  width:100%;height:3px;appearance:none;
+  background:var(--border2);border-radius:2px;
+  outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  appearance:none;width:15px;height:15px;
+  border-radius:50%;background:var(--accent);
+  border:2px solid white;
+  box-shadow:0 1px 4px rgba(0,102,255,0.3);
+  cursor:pointer;transition:transform 0.1s;
+}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+.speed-labels{
+  display:flex;justify-content:space-between;
+  margin-top:8px;font-size:0.68rem;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* UPLOAD */
+.upload-zone{
+  border:1.5px dashed var(--border2);
+  border-radius:10px;padding:16px;
+  text-align:center;cursor:pointer;
+  transition:all 0.2s;background:#fafafa;
+}
+.upload-zone:hover{border-color:var(--accent);background:var(--accent-light);}
+.upload-zone.has-file{border-color:var(--green);background:var(--green-light);}
+.upload-zone input{display:none;}
+.upload-icon{font-size:1.3rem;margin-bottom:5px;}
+.upload-title{font-size:0.82rem;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.upload-sub{font-size:0.7rem;color:var(--muted);line-height:1.4;}
+
+/* GENERATE */
+.btn-gen{
+  width:100%;padding:14px;
+  background:var(--accent);color:white;
+  border:none;border-radius:var(--radius);
+  font-family:'Inter',sans-serif;
+  font-size:0.95rem;font-weight:600;
+  cursor:pointer;transition:all 0.15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 2px 8px rgba(0,102,255,0.2);
+}
+.btn-gen:hover{background:#0052cc;transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,102,255,0.3);}
+.btn-gen:active{transform:translateY(0);}
+.btn-gen:disabled{background:#aaa;box-shadow:none;cursor:not-allowed;transform:none;}
+.dots{display:none;gap:3px;align-items:center;}
+.dots span{
+  width:5px;height:5px;background:white;border-radius:50%;
+  animation:blink 0.8s ease-in-out infinite;
+}
+.dots span:nth-child(2){animation-delay:0.13s;}
+.dots span:nth-child(3){animation-delay:0.26s;}
+@keyframes blink{0%,80%,100%{opacity:0.25;transform:scale(0.75);}40%{opacity:1;transform:scale(1);}}
+.btn-gen.loading .dots{display:flex;}
+.btn-gen.loading .blabel,.btn-gen.loading .bicon{display:none;}
+
+/* STATUS */
+.status{
+  text-align:center;font-size:0.78rem;
+  min-height:18px;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;
+}
+.status.err{color:var(--red);}
+.status.ok{color:var(--green);font-weight:600;}
+
+/* AUDIO */
+.audio-out{
+  background:#111;border-radius:var(--radius);
+  padding:18px;display:none;
+}
+.audio-out.show{display:block;animation:up 0.25s ease;}
+@keyframes up{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.audio-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;
+}
+.audio-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.62rem;color:rgba(255,255,255,0.35);
+  letter-spacing:2px;text-transform:uppercase;
+}
+.audio-badge{
+  font-size:0.68rem;padding:3px 10px;
+  background:rgba(255,255,255,0.08);
+  color:rgba(255,255,255,0.7);
+  border-radius:100px;
+  font-family:'JetBrains Mono',monospace;
+}
+.waveform{
+  display:flex;align-items:center;gap:2px;
+  height:32px;margin-bottom:12px;justify-content:center;
+}
+.wbar{width:2px;background:rgba(255,255,255,0.12);border-radius:1px;transition:height 0.08s;}
+.wbar.on{background:rgba(0,102,255,0.7);}
+audio{
+  width:100%;margin-bottom:10px;border-radius:6px;
+  filter:invert(1) hue-rotate(180deg) brightness(0.85);
+}
+.dl-row{display:flex;gap:8px;}
+.dl-btn{
+  flex:1;padding:7px;
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:7px;background:rgba(255,255,255,0.05);
+  color:rgba(255,255,255,0.6);
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.7rem;font-weight:600;
+  cursor:pointer;transition:all 0.15s;
+  display:flex;align-items:center;justify-content:center;gap:4px;
+}
+.dl-btn:hover{background:rgba(255,255,255,0.1);color:white;border-color:rgba(255,255,255,0.25);}
+
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr;}
+  .voice-row{grid-template-columns:1fr;}
+  body{padding:24px 16px;}
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-title">Multilingual Text to Speech</div>
+  <div class="page-sub">Natural speech synthesis across Indian languages · Fully offline · Open source</div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT -->
+  <div>
+    <!-- Text -->
+    <div class="card">
+      <div class="slabel">Input Text</div>
+      <textarea id="textInput"
+        placeholder="Type or paste your text here..."
+        maxlength="1000"
+        oninput="updateChar()"></textarea>
+      <div class="input-foot">
+        <div class="char-info"><span id="charCount">0</span> / 1000</div>
+        <button class="btn-clear" onclick="clearText()">Clear ✕</button>
+      </div>
+    </div>
+
+    <!-- Language -->
+    <div class="card">
+      <div class="slabel">Language</div>
+      <div class="lang-row">
+        <div class="lang-chip active" data-lang="en" onclick="pickLang(this)">🇬🇧 English</div>
+        <div class="lang-chip" data-lang="hi" onclick="pickLang(this)">🇮🇳 Hindi</div>
+        <div class="lang-chip" data-lang="kn" onclick="pickLang(this)">🌿 Kannada</div>
+        <div class="lang-chip" data-lang="te" onclick="pickLang(this)">🌺 Telugu</div>
+        <div class="lang-chip" data-lang="ta" onclick="pickLang(this)">🌸 Tamil</div>
+      </div>
+      <div class="mms-note" id="mmsNote">
+        ⚠ Kannada, Telugu and Tamil use Facebook MMS model with a single voice.
+        Voice selection applies to English and Hindi only.
+      </div>
+    </div>
+
+    <!-- Voice -->
+    <div class="card voice-section" id="voiceSection">
+      <div class="slabel">Voice</div>
+      <div class="voice-row">
+        <div class="voice-card active" data-voice="young_female" onclick="pickVoice(this)">
+          <div class="voice-avatar">👩</div>
+          <div>
+            <div class="vlabel">Young Female</div>
+            <div class="vdesc">Natural · Clear · Expressive</div>
+          </div>
+        </div>
+        <div class="voice-card" data-voice="young_male" onclick="pickVoice(this)">
+          <div class="voice-avatar">👨</div>
+          <div>
+            <div class="vlabel">Young Male</div>
+            <div class="vdesc">Natural · Deep · Expressive</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+
+    <!-- Speed -->
+    <div class="card">
+      <div class="slabel">Speaking Speed</div>
+      <div class="speed-num" id="speedNum">1.0 <span>× normal</span></div>
+      <input type="range" id="speedSlider"
+        min="0.5" max="2.0" step="0.1" value="1.0"
+        oninput="updateSpeed()"/>
+      <div class="speed-labels">
+        <span>0.5× Slow</span>
+        <span>1.0× Normal</span>
+        <span>2.0× Fast</span>
+      </div>
+    </div>
+
+    <!-- Voice Clone -->
+    <div class="card">
+      <div class="slabel">Voice Cloning <span style="color:#ccc;font-size:0.62rem;margin-left:4px;">OPTIONAL</span></div>
+      <div class="upload-zone" id="uploadZone"
+        onclick="document.getElementById('voiceFile').click()">
+        <input type="file" id="voiceFile" accept=".wav,.mp3" onchange="handleUpload()"/>
+        <div class="upload-icon">🎤</div>
+        <div class="upload-title">Upload Voice Sample</div>
+        <div class="upload-sub">3–5 seconds · .wav or .mp3<br>Overrides voice selection</div>
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <button class="btn-gen" id="genBtn" onclick="generate()">
+      <span class="bicon">▶</span>
+      <span class="blabel">Generate Speech</span>
+      <div class="dots"><span></span><span></span><span></span></div>
+    </button>
+
+    <div class="status" id="status"></div>
+
+    <!-- Output -->
+    <div class="audio-out" id="audioOut">
+      <div class="audio-head">
+        <div class="audio-label">Output</div>
+        <div class="audio-badge" id="audioBadge">English · Young Female</div>
+      </div>
+      <div class="waveform" id="waveform"></div>
+      <audio id="player" controls></audio>
+      <div class="dl-row">
+        <button class="dl-btn" onclick="dl('wav')">↓ WAV</button>
+        <button class="dl-btn" onclick="dl('mp3')">↓ MP3</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const MMS=['kn','te','ta'];
+const LNAMES={en:'English',hi:'Hindi',kn:'Kannada',te:'Telugu',ta:'Tamil'};
+const VNAMES={young_female:'Young Female',young_male:'Young Male'};
+let lang='en',voice='young_female',lastUrl='';
+
+// Waveform
+const wf=document.getElementById('waveform');
+for(let i=0;i<52;i++){
+  const b=document.createElement('div');
+  b.className='wbar';
+  b.style.height=(Math.random()*18+4)+'px';
+  wf.appendChild(b);
+}
+let wInt=null;
+function animWave(){
+  wf.querySelectorAll('.wbar').forEach(b=>{
+    b.style.height=(Math.random()*26+3)+'px';
+    b.classList.toggle('on',Math.random()>0.4);
+  });
+}
+
+function pickLang(el){
+  document.querySelectorAll('.lang-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  lang=el.dataset.lang;
+  const isMMS=MMS.includes(lang);
+  document.getElementById('mmsNote').classList.toggle('show',isMMS);
+  document.getElementById('voiceSection').classList.toggle('disabled',isMMS);
+}
+
+function pickVoice(el){
+  document.querySelectorAll('.voice-card').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  voice=el.dataset.voice;
+}
+
+function updateChar(){
+  document.getElementById('charCount').textContent=
+    document.getElementById('textInput').value.length;
+}
+
+function clearText(){
+  document.getElementById('textInput').value='';
+  document.getElementById('charCount').textContent='0';
+}
+
+function updateSpeed(){
+  const v=parseFloat(document.getElementById('speedSlider').value).toFixed(1);
+  document.getElementById('speedNum').innerHTML=v+' <span>× normal</span>';
+}
+
+function handleUpload(){
+  const f=document.getElementById('voiceFile').files[0];
+  if(f){
+    const z=document.getElementById('uploadZone');
+    z.classList.add('has-file');
+    z.querySelector('.upload-title').textContent='✓ '+f.name;
+    z.querySelector('.upload-sub').textContent='Voice cloning active';
+  }
+}
+
+function setStatus(msg,type){
+  const el=document.getElementById('status');
+  el.textContent=msg;
+  el.className='status '+(type||'');
+}
+
+async function generate(){
+  const text=document.getElementById('textInput').value.trim();
+  if(!text){setStatus('⚠ Enter some text first','err');return;}
+  const speed=document.getElementById('speedSlider').value;
+  const vfile=document.getElementById('voiceFile').files[0];
+  const btn=document.getElementById('genBtn');
+
+  btn.disabled=true;
+  btn.classList.add('loading');
+  document.getElementById('audioOut').classList.remove('show');
+  setStatus('Synthesizing...','');
+  wInt=setInterval(animWave,90);
+
+  const fd=new FormData();
+  fd.append('text',text);
+  fd.append('language',lang);
+  fd.append('speed',speed);
+  fd.append('voice_type',voice);
+  if(vfile) fd.append('speaker_wav',vfile);
+
+  try{
+    const res=await fetch('http://localhost:8000/synthesize',{method:'POST',body:fd});
+    const data=await res.json();
+    if(res.ok){
+      lastUrl='http://localhost:8000'+data.audio_url;
+      const p=document.getElementById('player');
+      p.src=lastUrl+'?t='+Date.now();
+      p.load();
+      document.getElementById('audioBadge').textContent=
+        LNAMES[lang]+' · '+VNAMES[voice];
+      document.getElementById('audioOut').classList.add('show');
+      setStatus('✓ Generated successfully','ok');
+    } else {
+      setStatus('✕ '+data.detail,'err');
+    }
+  } catch(e){
+    setStatus('✕ Server not running — start with: python main.py','err');
+  }
+
+  clearInterval(wInt);
+  btn.disabled=false;
+  btn.classList.remove('loading');
+}
+
+function dl(fmt){
+  if(!lastUrl)return;
+  const url=fmt==='mp3'?lastUrl.replace('.wav','.mp3'):lastUrl;
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`tts_${lang}_${voice}.${fmt}`;
+  a.click();
+}
+</script>
+</body>
+</html>
